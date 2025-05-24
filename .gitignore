@@ -32,3 +32,5 @@ pip-log.txt
 
 #example rom files
 data/
+
+.DS_Store

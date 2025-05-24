@@ -3,11 +3,12 @@
 # Copyright (C) 2013 Garrett Brown
 # See Copyright Notice in rominfo.py
 
-import testutils
-
 import unittest
 
+import testutils
+
 genesis = testutils.loadModule("genesis")
+
 
 class TestGenesisParser(unittest.TestCase):
     def setUp(self):
@@ -33,5 +34,6 @@ class TestGenesisParser(unittest.TestCase):
         self.assertEqual(props["memo"], "")
         self.assertEqual(props["country_codes"], "JUE")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()
