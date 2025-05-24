@@ -217,7 +217,7 @@ class DreamcastParser(RomInfoParser):
         return props
 
 
-RomInfoParser.registerParser(DreamcastParser())
+RomInfoParser.register_parser(DreamcastParser())
 
 CDI_V2 = 0x80000004
 CDI_V3 = 0x80000005

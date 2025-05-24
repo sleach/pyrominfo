@@ -451,6 +451,17 @@ class SNESParser(RomInfoParser):
             company_code = letter_val * 36 + region_val if letter_val >= 0 and region_val >= 0 else -1
         return company_code
 
+    def _all_ascii(self, data: bytes) -> bool:
+        return all(0x20 <= b and b <= 0x7E for b in data)
+
+    def _sanitize(self, title: bytes) -> str:
+        """
+        Turn all non-ASCII characters into spaces (tab, CR and LF line breaks
+        are OK to preserve formatting), and then return a stripped string.
+        """
+        return ''.join(chr(b) if b in [ord('\t'), ord('\n'), ord('\r')] or \
+                       0x20 <= b and b <= 0x7E else ' ' for b in title).strip()
+
 RomInfoParser.register_parser(SNESParser())
 
 

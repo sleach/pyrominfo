@@ -11,7 +11,7 @@ genesis = testutils.loadModule("genesis")
 
 class TestGenesisParser(unittest.TestCase):
     def setUp(self):
-        self.genesis_parser = genesis.GensisParser()
+        self.genesis_parser = genesis.GenesisParser()
 
     def test_genesis(self):
         empty = self.genesis_parser.parse("data/empty")

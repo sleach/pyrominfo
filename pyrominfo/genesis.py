@@ -3,7 +3,7 @@
 
 from pyrominfo import RomInfoParser
 
-class GensisParser(RomInfoParser):
+class GenesisParser(RomInfoParser):
     """
     Parse a Sega Gensis image. Valid extensions are smd, gen, 32x, md, bin, iso, mdx.
     Sega Gensis header references and related source code:
@@ -204,7 +204,7 @@ class GensisParser(RomInfoParser):
         company = company.rstrip()
         return gensis_publishers.get(company, "")
 
-RomInfoParser.register_parser(GensisParser())
+RomInfoParser.register_parser(GenesisParser())
 
 
 genesis_devices = {

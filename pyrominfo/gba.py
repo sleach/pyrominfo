@@ -4,7 +4,7 @@
 from pyrominfo import RomInfoParser
 
 # Publishers are the same across these handhelds
-from gameboy import gameboy_publishers
+from pyrominfo.gameboy import gameboy_publishers
 
 class GBAParser(RomInfoParser):
     """
