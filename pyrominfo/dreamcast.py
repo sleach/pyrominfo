@@ -99,11 +99,13 @@ class DreamcastParser(RomInfoParser):
                         f.seek(8, 1)
                     f.seek(2, 1)
                     track_pregap_length = struct.unpack("<I", f.read(4))[0]
-                    track_length = struct.unpack("<I", f.read(4))[0]
+                    # Skip track_length as it's not used
+                    f.seek(4, 1)
                     f.seek(6, 1)
                     track_mode = struct.unpack("<I", f.read(4))[0]
                     f.seek(12, 1)
-                    track_start_lba = struct.unpack("<I", f.read(4))[0]
+                    # Skip track_start_lba as it's not used
+                    f.seek(4, 1)
                     track_total_length = struct.unpack("<I", f.read(4))[0]
                     f.seek(16, 1)
                     sector_size_id = struct.unpack("<I", f.read(4))[0]

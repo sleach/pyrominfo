@@ -11,14 +11,13 @@ genesis = testutils.loadModule("genesis")
 
 class TestGenesisParser(unittest.TestCase):
     def setUp(self):
-        self.genesisParser = genesis.GensisParser()
+        self.genesis_parser = genesis.GensisParser()
 
     def test_genesis(self):
-        empty = self.genesisParser.parse("data/empty")
+        empty = self.genesis_parser.parse("data/empty")
         self.assertEqual(len(empty), 0)
 
-        props = self.genesisParser.parse("data/Sonic the Hedgehog.bin")
-        print "%s" % props
+        props = self.genesis_parser.parse("data/Sonic the Hedgehog.bin")
         self.assertEqual(len(props), 13)
         self.assertEqual(props["console"], "SEGA MEGA DRIVE")
         self.assertEqual(props["copyright"], "(C)SEGA 1991.APR")

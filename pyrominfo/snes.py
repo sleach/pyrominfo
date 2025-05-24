@@ -166,9 +166,9 @@ class SNESParser(RomInfoParser):
             props["video_output"] = "NTSC" if header[0x29] in [0, 1, 13] else "PAL" if header[0x29] < 13 else ""
 
             # 01A - Licensee code 0x33 implies an extended header at bytes ffb0..ffbf
-            company = self.getCompanyCode(header)
-            props["publisher"] = snes_publishers.get(company, "")
-            props["publisher_code"] = ("%04X" % company) if company != -1 else ""
+            company_code = self.getCompanyCode(header)
+            props["publisher"] = snes_publishers.get(company_code, "")
+            props["publisher_code"] = ("%04X" % company_code) if company_code != -1 else ""
 
             # 01B - Version, typically contains 0x00. Most ROM hackers never touch this
             #       byte, so multiple versions of a ROM hack may share the same value
@@ -249,7 +249,7 @@ class SNESParser(RomInfoParser):
         elif data[0x7ffc] + (data[0x7ffd] << 8) < 0x8000 and \
              data[0xfffc] + (data[0xfffd] << 8) < 0x8000 and not forceInterleavedOff:
             # If both vectors are invalid, it's type 1 interleaved LoROM
-            self.deinterleaveType1(data, len(data));
+            self.deinterleaveType1(data, len(data))
             # Modifying ROM, so we need to re-score
             hiScore = self.scoreHiRom(data)
             loScore = self.scoreLoRom(data)
@@ -298,7 +298,7 @@ class SNESParser(RomInfoParser):
             return SNESParser.FORMAT_HiROM
         else:
             # Swap memory models
-            self.deinterleaveType1(data, len(data));
+            self.deinterleaveType1(data, len(data))
             return SNESParser.FORMAT_LoROM if oldMapType == SNESParser.FORMAT_HiROM else SNESParser.FORMAT_HiROM
 
     def scoreHiRom(self, data, offset=0):
@@ -440,16 +440,16 @@ class SNESParser(RomInfoParser):
         return kart
 
     def getCompanyCode(self, header):
-        companyCode = -1
+        company_code = -1
         if header[0x2a] != 0x33:
-            companyCode = ((header[0x2a] >> 4) & 0x0F) * 36 + (header[0x2a] & 0x0F)
+            company_code = ((header[0x2a] >> 4) & 0x0F) * 36 + (header[0x2a] & 0x0F)
         else:
-            l = chr(header[0x00]).upper()
-            r = chr(header[0x01]).upper()
-            l2 = ord(l) - ord('7') if l > '9' else ord(l) - ord('0')
-            r2 = ord(r) - ord('7') if r > '9' else ord(r) - ord('0')
-            companyCode = l2 * 36 + r2 if l2 >= 0 and r2 >= 0 else -1
-        return companyCode
+            letter = chr(header[0x00]).upper()
+            region = chr(header[0x01]).upper()
+            letter_val = ord(letter) - ord('7') if letter > '9' else ord(letter) - ord('0')
+            region_val = ord(region) - ord('7') if region > '9' else ord(region) - ord('0')
+            company_code = letter_val * 36 + region_val if letter_val >= 0 and region_val >= 0 else -1
+        return company_code
 
 RomInfoParser.registerParser(SNESParser())
 
