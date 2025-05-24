@@ -11,13 +11,13 @@ nintendo64 = testutils.loadModule("nintendo64")
 
 class TestNintendo64Parser(unittest.TestCase):
     def setUp(self):
-        self.n64Parser = nintendo64.Nintendo64Parser()
+        self.n64_parser = nintendo64.Nintendo64Parser()
 
     def test_nintendo64(self):
-        empty = self.n64Parser.parse("data/empty")
+        empty = self.n64_parser.parse("data/empty")
         self.assertEqual(len(empty), 0)
 
-        props = self.n64Parser.parse("data/Super Smash Bros.z64")
+        props = self.n64_parser.parse("data/Super Smash Bros.z64")
         self.assertEqual(len(props), 9)
         self.assertEqual(props["title"], "SMASH BROTHERS")
         self.assertEqual(props["version"], "00001449")

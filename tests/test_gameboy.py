@@ -11,13 +11,13 @@ gameboy = testutils.loadModule("gameboy")
 
 class TestGameboyParser(unittest.TestCase):
     def setUp(self):
-        self.gbParser = gameboy.GameboyParser()
+        self.gb_parser = gameboy.GameboyParser()
 
     def test_gameboy(self):
-        empty = self.gbParser.parse("data/empty")
+        empty = self.gb_parser.parse("data/empty")
         self.assertEqual(len(empty), 0)
 
-        props = self.gbParser.parse("data/The Legend of Zelda - Links Awakening DX.gbc")
+        props = self.gb_parser.parse("data/The Legend of Zelda - Links Awakening DX.gbc")
         self.assertEqual(len(props), 15)
         self.assertEqual(props["title"], "ZELDA")
         self.assertEqual(props["platform"], "Game Boy Color")

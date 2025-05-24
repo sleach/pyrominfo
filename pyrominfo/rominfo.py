@@ -24,46 +24,49 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from typing import List, Dict, Any, Optional, Union
+import os
+
 class RomInfoParser(object):
     """
     Base class for ROM info parsers. When an info parser subclasses this
-    object, it can register itself with registerParser(), and
+    object, it can register itself with register_parser(), and
     pyrominfo.parse() will automatically include it when trying to parse a ROM
     file.
     """
 
-    __parsers = []
+    __parsers: List['RomInfoParser'] = []
 
     @staticmethod
-    def registerParser(romInfoParser):
-        RomInfoParser.__parsers.append(romInfoParser)
+    def register_parser(rom_info_parser: 'RomInfoParser') -> None:
+        RomInfoParser.__parsers.append(rom_info_parser)
 
     @staticmethod
-    def getParsers():
+    def get_parsers() -> List['RomInfoParser']:
         return RomInfoParser.__parsers
 
-    def __init__(self):
+    def __init__(self) -> None:
         pass
 
-    def getValidExtensions(self):
+    def get_valid_extensions(self) -> List[str]:
         return []
 
-    def isValidExtension(self, ext):
-        return ext in self.getValidExtensions()
+    def is_valid_extension(self, ext: str) -> bool:
+        return ext in self.get_valid_extensions()
 
-    def parse(self, filename):
+    def parse(self, filename: str) -> Dict[str, Any]:
         return {}
 
-    def isValidData(self, data):
+    def is_valid_data(self, data: bytes) -> bool:
         return False
 
-    def parseBuffer(self, data):
+    def parse_buffer(self, data: bytes) -> Dict[str, Any]:
         return {}
 
-    def _getExtension(self, uri):
-        return uri[uri.rindex(".") + 1 : ].lower() if "." in uri else ""
+    def _get_extension(self, uri: str) -> str:
+        return uri[uri.rindex(".") + 1:].lower() if "." in uri else ""
 
-    def _sanitize(self, title):
+    def _sanitize(self, title: bytes) -> str:
         """
         Turn all non-ASCII characters into spaces (tab, CR and LF line breaks
         are OK to preserve formatting), and then return a stripped string.
@@ -71,5 +74,5 @@ class RomInfoParser(object):
         return ''.join(chr(b) if b in [ord('\t'), ord('\n'), ord('\r')] or \
                        0x20 <= b and b <= 0x7E else ' ' for b in title).strip()
 
-    def _allASCII(self, data):
+    def _all_ascii(self, data: bytes) -> bool:
         return all(0x20 <= b and b <= 0x7E for b in data)
