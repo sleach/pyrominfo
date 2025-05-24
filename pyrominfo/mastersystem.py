@@ -1,7 +1,7 @@
 # Copyright (C) 2013 Garrett Brown
 # See Copyright Notice in rominfo.py
 
-from rominfo import RomInfoParser
+from pyrominfo import RomInfoParser
 
 class MasterSystemParser(RomInfoParser):
     """
@@ -12,7 +12,7 @@ class MasterSystemParser(RomInfoParser):
     * http://www.smspower.org/Development/SDSCHeader
     """
 
-    def getValidExtensions(self):
+    def get_valid_extensions(self):
         return ["sms", "gg", "sg"]
 
     def parse(self, filename):
@@ -21,10 +21,10 @@ class MasterSystemParser(RomInfoParser):
             data = bytearray(f.read())
             # First header check is at 0x1FF0, so we clearly need at least this much data
             if len(data) >= 0x2000:
-                props = self.parseBuffer(data)
+                props = self.parse_buffer(data)
         return props
 
-    def isValidData(self, data):
+    def is_valid_data(self, data):
         """
         Sniff out Master System ROM header. Note that some ROMs may use
         custom text. Gensis Plus GX looks at addresses 0x1FF0, 0x3FF0, 0x7FF0.
@@ -42,10 +42,10 @@ class MasterSystemParser(RomInfoParser):
             return True
         return False
 
-    def parseBuffer(self, data):
+    def parse_buffer(self, data):
         props = {}
 
-        # Find Master System header offset (see isValidData(), default to 0x7FF0)
+        # Find Master System header offset (see is_valid_data(), default to 0x7FF0)
         offset = 0x7ff0
         for off in 0x1ff0, 0x3ff0, 0x81f0:
             if data[off : off + 8] == b"TMR SEGA":
@@ -97,7 +97,7 @@ class MasterSystemParser(RomInfoParser):
         #          size, perhaps to speed up the boot process by speeding up the checksum validation.
         props["rom_size"] = mastersystem_romsize.get(header[0x0f] & 0x0f, "")
 
-        # SDSC (homebrew) header. See isValidData()
+        # SDSC (homebrew) header. See is_valid_data()
         if data[0x7fe0 : 0x7fe0 + 4] == b"SDSC" and len(data) > 0x7fe0 + 0x10:
             sdsc = data[0x7fe0 : 0x7fe0 + 0x10]
             # 7FE0-7FE3 - Magic word "SDSC", this is used to show that the header is present
@@ -143,7 +143,7 @@ class MasterSystemParser(RomInfoParser):
         return ""
         
 
-RomInfoParser.registerParser(MasterSystemParser())
+RomInfoParser.register_parser(MasterSystemParser())
 
 
 mastersystem_romsize = {

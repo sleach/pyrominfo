@@ -1,7 +1,7 @@
 # Copyright (C) 2013 Garrett Brown
 # See Copyright Notice in rominfo.py
 
-from rominfo import RomInfoParser
+from pyrominfo import RomInfoParser
 
 class Nintendo64Parser(RomInfoParser):
     """
@@ -12,18 +12,18 @@ class Nintendo64Parser(RomInfoParser):
     * https://bitbucket.org/richard42/mupen64plus-core/src/4cd70c2b5d38/src/main/rom.c
     """
 
-    def getValidExtensions(self):
+    def get_valid_extensions(self):
         return ["n64", "v64", "z64"]
 
     def parse(self, filename):
         props = {}
         with open(filename, "rb") as f:
             data = bytearray(f.read(64))
-            if self.isValidData(data):
-                props = self.parseBuffer(data)
+            if self.is_valid_data(data):
+                props = self.parse_buffer(data)
         return props
 
-    def isValidData(self, data):
+    def is_valid_data(self, data):
         """
         Test for a valid N64 image by checking the first 4 bytes for the magic word.
         """
@@ -42,10 +42,10 @@ class Nintendo64Parser(RomInfoParser):
                 return True
         return False
 
-    def parseBuffer(self, data):
+    def parse_buffer(self, data):
         props = {}
 
-        self.makeNativeFormat(data)
+        self.make_native_format(data)
 
         props["title"] = self._sanitize(data[0x20 : 0x20 + 20])
 
@@ -66,7 +66,7 @@ class Nintendo64Parser(RomInfoParser):
 
         return props
 
-    def makeNativeFormat(self, data):
+    def make_native_format(self, data):
         """
         Correct for word- and byte-swapping.
         """
@@ -77,7 +77,7 @@ class Nintendo64Parser(RomInfoParser):
         elif [b for b in data[:4]] == [0x12, 0x40, 0x80, 0x37]: # [CDAB]
             data[::4], data[1::4], data[2::4], data[3::4] = data[2::4], data[3::4], data[::4], data[1::4]
 
-RomInfoParser.registerParser(Nintendo64Parser())
+RomInfoParser.register_parser(Nintendo64Parser())
 
 
 n64_regions = {

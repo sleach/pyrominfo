@@ -6,7 +6,7 @@ import csv
 import struct
 import time
 import datetime
-from rominfo import RomInfoParser
+from pyrominfo import RomInfoParser
 
 
 class DreamcastParser(RomInfoParser):
@@ -23,7 +23,7 @@ class DreamcastParser(RomInfoParser):
     * https://www.dropbox.com/s/ithnw69wy3ciuzn/IP0000.BIN.txt
     """
 
-    def getValidExtensions(self):
+    def get_valid_extensions(self):
         # TODO: Improve cdi support
         # TODO: Add chd support
         return ["cdi", "gdi"]
@@ -41,7 +41,7 @@ class DreamcastParser(RomInfoParser):
         if data is None:
             return {}
         else:
-            return self.parseBuffer(data)
+            return self.parse_buffer(data)
 
     def _parse_cdi(self, filename):
         file_size = os.path.getsize(filename)
@@ -176,7 +176,7 @@ class DreamcastParser(RomInfoParser):
                     f.seek(ip_bin_position)
                     return f.read(256)
 
-    def parseBuffer(self, data):
+    def parse_buffer(self, data):
         # See SEGA's GD-ROM Format Basic Specifications Ver. 2.13, p. 13 for
         # details.
         fmt = "<16s16s5s11s8s8s10s6s8s8x12s4x16s96s32x"

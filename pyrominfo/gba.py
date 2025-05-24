@@ -1,7 +1,7 @@
 # Copyright (C) 2013 Garrett Brown
 # See Copyright Notice in rominfo.py
 
-from rominfo import RomInfoParser
+from pyrominfo import RomInfoParser
 
 # Publishers are the same across these handhelds
 from gameboy import gameboy_publishers
@@ -16,18 +16,18 @@ class GBAParser(RomInfoParser):
     * http://sourceforge.net/p/vbam/code/HEAD/tree/trunk/src/win32/RomInfo.cpp
     """
 
-    def getValidExtensions(self):
+    def get_valid_extensions(self):
         return ["gba", "agb"]
 
     def parse(self, filename):
         props = {}
         with open(filename, "rb") as f:
             data = bytearray(f.read(0xc0))
-            if self.isValidData(data):
-                props = self.parseBuffer(data)
+            if self.is_valid_data(data):
+                props = self.parse_buffer(data)
         return props
 
-    def isValidData(self, data):
+    def is_valid_data(self, data):
         """
         The watermark we use here is the Nintendo logo. The Nintendo logo that is
         displayed when the Gameboy gets turned on is stored in the 156 bytes from
@@ -48,7 +48,7 @@ class GBAParser(RomInfoParser):
         ]
         return [b for b in data[0x04 : 0x04 + len(nintendo_logo)]] == nintendo_logo
 
-    def parseBuffer(self, data):
+    def parse_buffer(self, data):
         props = {}
 
         # 00A0-00AB - Title, UPPER CASE ASCII, padded with 00h (if less than 12 chars)
@@ -79,4 +79,4 @@ class GBAParser(RomInfoParser):
 
         return props
 
-RomInfoParser.registerParser(GBAParser())
+RomInfoParser.register_parser(GBAParser())

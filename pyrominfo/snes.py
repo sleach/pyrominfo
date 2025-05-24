@@ -14,7 +14,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-from rominfo import RomInfoParser
+from pyrominfo import RomInfoParser
 
 class SNESParser(RomInfoParser):
     """
@@ -37,7 +37,7 @@ class SNESParser(RomInfoParser):
     FORMAT_SMALLFIRST = 0
     FORMAT_BIGFIRST = 1
 
-    def getValidExtensions(self):
+    def get_valid_extensions(self):
         return ["smc", "swc", "fig"]
 
     def parse(self, filename):
@@ -45,48 +45,48 @@ class SNESParser(RomInfoParser):
         with open(filename, "rb") as f:
             data = bytearray(f.read())
             if len(data):
-                props = self.parseBuffer(data)
+                props = self.parse_buffer(data)
         return props
 
-    def isValidData(self, data):
+    def is_valid_data(self, data):
         if len(data):
-            if self.hasSMCHeader(data):
+            if self.has_smc_header(data):
                 return True
             # TODO: Need more conclusive tests
             return False
         return False
 
-    def parseBuffer(self, romdata):
+    def parse_buffer(self, romdata):
         props = {}
-        forceInterleavedOff = False
+        force_interleaved_off = False
 
         while True:
             # Check for a header (512 bytes), and skip it if found
-            data = romdata[512:] if self.hasSMCHeader(romdata) else romdata[:]
+            data = romdata[512:] if self.has_smc_header(romdata) else romdata[:]
 
-            (hiScore, loScore, extendedFormat, headerOffsetRef) = self.findHiLoMode(data, forceInterleavedOff)
+            (hi_score, lo_score, extended_format, header_offset_ref) = self.find_hi_lo_mode(data, force_interleaved_off)
 
             # These two games fail to be detected (Source: Snes9x)
             if data[0x7fc0 : 0x7fc0 + 22] == b"YUYU NO QUIZ DE GO!GO!" or \
                data[0xffc0 : 0xffc0 + 21] == b"BATMAN--REVENGE JOKER":
-                (mapType, interleaved, tales) = (SNESParser.FORMAT_LoROM, False, False)
+                (map_type, interleaved, tales) = (SNESParser.FORMAT_LoROM, False, False)
             else:
-                (mapType, interleaved, tales) = self.findMemoryModel(data[headerOffsetRef : ], hiScore, loScore)
+                (map_type, interleaved, tales) = self.find_memory_model(data[header_offset_ref : ], hi_score, lo_score)
 
-            if not forceInterleavedOff and interleaved:
-                mapType = self.convertInterleaved(data, extendedFormat, mapType, tales)
+            if not force_interleaved_off and interleaved:
+                map_type = self.convert_interleaved(data, extended_format, map_type, tales)
 
                 # Modifying ROM, so we need to re-score
-                hiScore = self.scoreHiRom(data)
-                loScore = self.scoreLoRom(data)
+                hi_score = self.score_hi_rom(data)
+                lo_score = self.score_lo_rom(data)
 
-                if (mapType == SNESParser.FORMAT_HiROM and (loScore >= hiScore or hiScore < 0)) or \
-                   (mapType == SNESParser.FORMAT_LoROM and (hiScore >  loScore or loScore < 0)):
+                if (map_type == SNESParser.FORMAT_HiROM and (lo_score >= hi_score or hi_score < 0)) or \
+                   (map_type == SNESParser.FORMAT_LoROM and (hi_score >  lo_score or lo_score < 0)):
                     # Game image lied about its type! Trying again...
-                    forceInterleavedOff = True
+                    force_interleaved_off = True
                     continue
 
-            if tales or extendedFormat == SNESParser.FORMAT_SMALLFIRST:
+            if tales or extended_format == SNESParser.FORMAT_SMALLFIRST:
                 # Fix swapped ExHiROM
                 tmp = data[ : -0x400000]
                 tmp2 = data[-0x400000 : ]
@@ -95,29 +95,29 @@ class SNESParser(RomInfoParser):
 
             if data[0x7fc0 : 0x7fc0 + 21] == b"Satellaview BS-X     ":
                 bs = True
-                bsHeader = False
-                mapType = SNESParser.FORMAT_LoROM
+                bs_header = False
+                map_type = SNESParser.FORMAT_LoROM
             else:
-                bLo = (self.isBSX(data[0x7fc0 : 0x7fc0 + 0x1b]) == 1)
-                bHi = (self.isBSX(data[0xffc0 : 0xffc0 + 0x1b]) == 1)
-                bs = bLo or bHi
-                bsHeader = bs
+                b_lo = (self.is_bsx(data[0x7fc0 : 0x7fc0 + 0x1b]) == 1)
+                b_hi = (self.is_bsx(data[0xffc0 : 0xffc0 + 0x1b]) == 1)
+                bs = b_lo or b_hi
+                bs_header = bs
                 if bs:
-                    mapType = SNESParser.FORMAT_LoROM if bLo else SNESParser.FORMAT_HiROM
+                    map_type = SNESParser.FORMAT_LoROM if b_lo else SNESParser.FORMAT_HiROM
 
             # Re-calculate the header offset (include extended header, 0x10
             # bytes before the actual 64-byte SNES header starts)
             # See http://romhack.wikia.com/wiki/SNES_header#Extended_header_.28bytes_.24ffb2...24ffb5.29
-            headerOffset = 0x7fb0
-            if extendedFormat == SNESParser.FORMAT_BIGFIRST:
-                headerOffset += 0x400000
-            if mapType == SNESParser.FORMAT_HiROM:
-                headerOffset += 0x8000
-            header = data[headerOffset : ]
+            header_offset = 0x7fb0
+            if extended_format == SNESParser.FORMAT_BIGFIRST:
+                header_offset += 0x400000
+            if map_type == SNESParser.FORMAT_HiROM:
+                header_offset += 0x8000
+            header = data[header_offset : ]
 
-            # Instead of branching on bsHeader, simply apply the different
+            # Instead of branching on bs_header, simply apply the different
             # values to the ROM data and use the same code below to set props
-            if bsHeader: # The BS game's SRAM was not found
+            if bs_header: # The BS game's SRAM was not found
                 # Only use the first 16 of 21 title characters
                 header[0x010 + 16, 0x010 + 21] = b"     "
                 # Rom speed flag uses 0x28 (RAM size?) instead of 0x25
@@ -147,12 +147,12 @@ class SNESParser(RomInfoParser):
             #       0x20 is always set
             #       0x10 is set when using FastROM
             #       0x01 is set for HiROM or cleared for LoROM
-            HiROM = "ExHiROM" if extendedFormat else "HiROM"
-            props["memory_layout"] = HiROM if mapType == SNESParser.FORMAT_HiROM else "LoROM"
+            HiROM = "ExHiROM" if extended_format else "HiROM"
+            props["memory_layout"] = HiROM if map_type == SNESParser.FORMAT_HiROM else "LoROM"
             props["rom_speed"] = "FastROM" if (header[0x25] & 0x10) else "SlowROM"
 
             # 016 - Cartridge type, values greater than 0x02 indicate special add-on hardware in the cartridge
-            props["cartridge_type"] = self.getCartridgeType(header, bs)
+            props["cartridge_type"] = self.get_cartridge_type(header, bs)
 
             # 017 - ROM size: 1 << (ROM_SIZE - 7) Mbits, range is 8..12 (256KB..4MB, 2Mb..32Mb)
             b = header[0x27]
@@ -166,7 +166,7 @@ class SNESParser(RomInfoParser):
             props["video_output"] = "NTSC" if header[0x29] in [0, 1, 13] else "PAL" if header[0x29] < 13 else ""
 
             # 01A - Licensee code 0x33 implies an extended header at bytes ffb0..ffbf
-            company_code = self.getCompanyCode(header)
+            company_code = self.get_company_code(header)
             props["publisher"] = snes_publishers.get(company_code, "")
             props["publisher_code"] = ("%04X" % company_code) if company_code != -1 else ""
 
@@ -184,7 +184,7 @@ class SNESParser(RomInfoParser):
 
             return props
 
-    def hasSMCHeader(self, data):
+    def has_smc_header(self, data):
         """
         Check for a 512-byte SMC, SWC or FIG header prepended to the beginning
         of the file.
@@ -208,7 +208,7 @@ class SNESParser(RomInfoParser):
                 return True
         return False
 
-    def deinterleaveType1(self, data, size):
+    def deinterleave_type1(self, data, size):
         """
         Swap blocks in a range of ROM memory.
         """
@@ -227,46 +227,46 @@ class SNESParser(RomInfoParser):
                     blocks[i] = b
                     break
 
-    def findHiLoMode(self, data, forceInterleavedOff):
-        hiScore = self.scoreHiRom(data)
-        loScore = self.scoreLoRom(data)
-        extendedFormat = False
-        headerOffsetRef = 0
+    def find_hi_lo_mode(self, data, force_interleaved_off):
+        hi_score = self.score_hi_rom(data)
+        lo_score = self.score_lo_rom(data)
+        extended_format = False
+        header_offset_ref = 0
 
         if len(data) > 0x400000 and \
                 data[0x7fd5] + (data[0x7fd6] << 8) not in [0x3423, 0x3523, 0x4332, 0x4532] and \
                 data[0xffd5] + (data[0xffd6] << 8) not in [0xf93a, 0xf53a]:
-            swappedHiRom = self.scoreHiROM(data, 0x400000)
-            swappedLoRom = self.scoreLoROM(data, 0x400000)
-            if max(swappedLoRom, swappedHiRom) >= max(loScore, hiScore):
-                extendedFormat = SNESParser.FORMAT_BIGFIRST
-                hiScore = swappedHiRom
-                loScore = swappedLoRom
-                headerOffsetRef = 0x400000
+            swapped_hi_rom = self.score_hi_rom(data, 0x400000)
+            swapped_lo_rom = self.score_lo_rom(data, 0x400000)
+            if max(swapped_lo_rom, swapped_hi_rom) >= max(lo_score, hi_score):
+                extended_format = SNESParser.FORMAT_BIGFIRST
+                hi_score = swapped_hi_rom
+                lo_score = swapped_lo_rom
+                header_offset_ref = 0x400000
             else:
-                extendedFormat = SNESParser.FORMAT_SMALLFIRST
+                extended_format = SNESParser.FORMAT_SMALLFIRST
 
         elif data[0x7ffc] + (data[0x7ffd] << 8) < 0x8000 and \
-             data[0xfffc] + (data[0xfffd] << 8) < 0x8000 and not forceInterleavedOff:
+             data[0xfffc] + (data[0xfffd] << 8) < 0x8000 and not force_interleaved_off:
             # If both vectors are invalid, it's type 1 interleaved LoROM
-            self.deinterleaveType1(data, len(data))
+            self.deinterleave_type1(data, len(data))
             # Modifying ROM, so we need to re-score
-            hiScore = self.scoreHiRom(data)
-            loScore = self.scoreLoRom(data)
+            hi_score = self.score_hi_rom(data)
+            lo_score = self.score_lo_rom(data)
 
-        return (hiScore, loScore, extendedFormat, headerOffsetRef,)
+        return (hi_score, lo_score, extended_format, header_offset_ref,)
 
-    def findMemoryModel(self, data, hiScore, loScore):
+    def find_memory_model(self, data, hi_score, lo_score):
         """
         Determine if the ROM is a LoROM Memory Model (32k Banks) or HiROM
         Memory Model (64k Banks).
         """
-        mapType = None # SNESParser.FORMAT_LoROM or SNESParser.FORMAT_HiROM
+        map_type = None # SNESParser.FORMAT_LoROM or SNESParser.FORMAT_HiROM
         interleaved = False
         tales = False
 
-        if loScore >= hiScore:
-            mapType = SNESParser.FORMAT_LoROM
+        if lo_score >= hi_score:
+            map_type = SNESParser.FORMAT_LoROM
             # Ignore map type byte if not 0x2x or 0x3x
             if data[0x7fd5] & 0xf0 in [0x20, 0x30]:
                 if data[0x7fd5] & 0x0f == 1:
@@ -275,33 +275,33 @@ class SNESParser(RomInfoParser):
                     interleaved = True
                     tales = True
         else:
-            mapType = SNESParser.FORMAT_HiROM
+            map_type = SNESParser.FORMAT_HiROM
             if data[0xffd5] & 0xf0 in [0x20, 0x30]:
                 if data[0xffd5] & 0x0f in [0, 3]:
                     interleaved = True
 
-        return (mapType, interleaved, tales,)
+        return (map_type, interleaved, tales,)
 
-    def convertInterleaved(self, data, extendedFormat, oldMapType, tales):
+    def convert_interleaved(self, data, extended_format, old_map_type, tales):
         # ROM image is in interleaved format, converting...
         if tales:
-            if extendedFormat == SNESParser.FORMAT_BIGFIRST:
-                self.deinterleaveType1(data, 0x400000)
+            if extended_format == SNESParser.FORMAT_BIGFIRST:
+                self.deinterleave_type1(data, 0x400000)
                 tmpdata = data[0x400000 : ]
-                self.deinterleaveType1(tmpdata, len(data))
+                self.deinterleave_type1(tmpdata, len(data))
                 data[0x400000 : ] = tmpdata
             else:
-                self.deinterleaveType1(data, len(data) - 0x400000)
+                self.deinterleave_type1(data, len(data) - 0x400000)
                 tmpdata = data[len(data) - 0x400000 : ]
-                self.deinterleaveType1(tmpdata, 0x400000)
+                self.deinterleave_type1(tmpdata, 0x400000)
                 data[len(data) - 0x400000 : ] = tmpdata
             return SNESParser.FORMAT_HiROM
         else:
             # Swap memory models
-            self.deinterleaveType1(data, len(data))
-            return SNESParser.FORMAT_LoROM if oldMapType == SNESParser.FORMAT_HiROM else SNESParser.FORMAT_HiROM
+            self.deinterleave_type1(data, len(data))
+            return SNESParser.FORMAT_LoROM if old_map_type == SNESParser.FORMAT_HiROM else SNESParser.FORMAT_HiROM
 
-    def scoreHiRom(self, data, offset=0):
+    def score_hi_rom(self, data, offset=0):
         size = len(data)
         data = data[0xff00 + offset : ]
         score = 0
@@ -327,15 +327,15 @@ class SNESParser(RomInfoParser):
             score -= 2
         if not (data[0xfd] & 0x80):
             score -= 6
-        if not self._allASCII(data[0xb0 : 0xb0 + 6]):
+        if not self._all_ascii(data[0xb0 : 0xb0 + 6]):
             score -= 1
-        if not self._allASCII(data[0xc0 : 0xc0 + 22]):
+        if not self._all_ascii(data[0xc0 : 0xc0 + 22]):
             score -= 1
         if size > 1024 * 1024 * 3:
             score += 4
         return score
 
-    def scoreLoRom(self, data, offset=0):
+    def score_lo_rom(self, data, offset=0):
         size = len(data)
         data = data[0x7f00 + offset : ]
         score = 0
@@ -359,15 +359,15 @@ class SNESParser(RomInfoParser):
             score -= 2
         if not (data[0xfd] & 0x80):
             score -= 6
-        if not self._allASCII(data[0xb0 : 0xb0 + 6]):
+        if not self._all_ascii(data[0xb0 : 0xb0 + 6]):
             score -= 1
-        if not self._allASCII(data[0xc0 : 0xc0 + 22]):
+        if not self._all_ascii(data[0xc0 : 0xc0 + 22]):
             score -= 1
         if size <= 1024 * 1024 * 16:
             score += 2
         return score
 
-    def isBSX(self, data):
+    def is_bsx(self, data):
         """"
         Only need the first 0x1B (27) bytes of data to test for BS-X BIOSes.
         """
@@ -379,14 +379,14 @@ class SNESParser(RomInfoParser):
                 return 1
         return 0
 
-    def getCartridgeType(self, header, bs):
-        romSpeed = header[0x25]
-        romType = header[0x26]
+    def get_cartridge_type(self, header, bs):
+        rom_speed = header[0x25]
+        rom_type = header[0x26]
 
-        if romType == 0 and not bs:
+        if rom_type == 0 and not bs:
             kart = "ROM"
         else:
-            identifier = ((romType & 0xff) << 8) + (romSpeed & 0xff)
+            identifier = ((rom_type & 0xff) << 8) + (rom_speed & 0xff)
             contents = ["ROM", "ROM+RAM", "ROM+RAM+BATT"]
             chip = ""
 
@@ -421,25 +421,25 @@ class SNESParser(RomInfoParser):
                 chip = "ST-018"
                 # Set the SRAM  size to 32 Kbit
                 header[0x28] = 0x02
-            elif romType == 0x03:
-                if romSpeed == 0x30:
+            elif rom_type == 0x03:
+                if rom_speed == 0x30:
                     chip = "DSP-4"
                 else:
                     chip = "DSP-1"
-            elif romType == 0x05:
-                if romSpeed == 0x20:
+            elif rom_type == 0x05:
+                if rom_speed == 0x20:
                     chip = "DSP-2"
-                elif romSpeed == 0x30 and header[0x2a] == 0xb2:
+                elif rom_speed == 0x30 and header[0x2a] == 0xb2:
                     chip = "DSP-3"
                 else:
                     chip = "DSP-1"
             if chip:
-                kart = "%s+%s" % (contents[(romType & 0xf) % 3], chip)
+                kart = "%s+%s" % (contents[(rom_type & 0xf) % 3], chip)
             else:
-                kart = contents[(romType & 0xf) % 3]
+                kart = contents[(rom_type & 0xf) % 3]
         return kart
 
-    def getCompanyCode(self, header):
+    def get_company_code(self, header):
         company_code = -1
         if header[0x2a] != 0x33:
             company_code = ((header[0x2a] >> 4) & 0x0F) * 36 + (header[0x2a] & 0x0F)
@@ -451,7 +451,7 @@ class SNESParser(RomInfoParser):
             company_code = letter_val * 36 + region_val if letter_val >= 0 and region_val >= 0 else -1
         return company_code
 
-RomInfoParser.registerParser(SNESParser())
+RomInfoParser.register_parser(SNESParser())
 
 
 # Souce: http://softpixel.com/~cwright/sianse/docs/Snesrom.txt
