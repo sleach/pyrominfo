@@ -24,8 +24,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from typing import List, Dict, Any, Optional, Union
-import os
+from typing import List, Dict, Any
 
 class RomInfoParser(object):
     """
