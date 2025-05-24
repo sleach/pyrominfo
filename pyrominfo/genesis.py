@@ -204,6 +204,14 @@ class GenesisParser(RomInfoParser):
         company = company.rstrip()
         return gensis_publishers.get(company, "")
 
+    def _sanitize(self, title: bytes) -> str:
+        """
+        Turn all non-ASCII characters into spaces (tab, CR and LF line breaks
+        are OK to preserve formatting), and then return a stripped string.
+        """
+        return ''.join(chr(b) if b in [ord('\t'), ord('\n'), ord('\r')] or \
+                       0x20 <= b and b <= 0x7E else ' ' for b in title).strip()
+
 RomInfoParser.register_parser(GenesisParser())
 
 
